@@ -1,9 +1,12 @@
 "use client";
 import React from "react";
 import { Button } from "./ui/button";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const Hero = () => {
+  const session = useSession();
+  const navigator = useRouter();
   return (
     <div>
       <div className="text-5xl font-semibold">
@@ -17,14 +20,25 @@ const Hero = () => {
         Start today at a rate of stupid 1% tax given to Govt.
       </div>
       <div className="flex justify-center items-center pt-4">
-        <Button
-          onClick={() => {
-            signIn("google");
-          }}
-          className="border-spacing-4 border-cyan-600 border-solid bg-slate-300 rounded-xl"
-        >
-          Login with Google{" "}
-        </Button>
+        {!session.data?.user ? (
+          <Button
+            onClick={() => {
+              signIn("google");
+            }}
+            className="border-spacing-4 border-cyan-600 border-solid bg-slate-300 rounded-xl"
+          >
+            Login with Google{" "}
+          </Button>
+        ) : (
+          <Button
+            onClick={() => {
+              navigator.push("/dashboard");
+            }}
+            className="border-spacing-4 border-cyan-600 border-solid bg-slate-300 rounded-xl"
+          >
+            Navigate to Dashboard
+          </Button>
+        )}
       </div>
     </div>
   );
