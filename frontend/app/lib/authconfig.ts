@@ -58,25 +58,24 @@ export const authConfig = {
       }
       return false;
     },
-  },
-  session: ({ session, token }: any): session => {
-    const newSession: session = session as session;
-    if (newSession.user && token.uid) {
-      // @ts-ignore
-      newSession.user.uid = token.uid ?? "";
-    }
-    return newSession!;
-  },
-
-  async jwt({ token, account, profile }: any) {
-    const user = await prisma.user.findFirst({
-      where: {
-        sub: account?.providerAccountId ?? "",
-      },
-    });
-    if (user) {
-      token.uid = user.id;
-    }
-    return token;
+    session: ({ session, token }: any): session => {
+      const newSession: session = session as session;
+      if (newSession.user && token.uid) {
+        // @ts-ignore
+        newSession.user.uid = token.uid ?? "";
+      }
+      return newSession!;
+    },
+    async jwt({ token, account, profile }: any) {
+      const user = await prisma.user.findFirst({
+        where: {
+          sub: account?.providerAccountId ?? "",
+        },
+      });
+      if (user) {
+        token.uid = user.id;
+      }
+      return token;
+    },
   },
 };
