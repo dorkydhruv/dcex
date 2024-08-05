@@ -1,6 +1,6 @@
 import GoogleProvider from "next-auth/providers/google";
+import db from "@/app/db";
 import { Keypair } from "@solana/web3.js";
-import prisma from "@/app/db";
 
 import { Session } from "next-auth";
 
@@ -22,42 +22,6 @@ export const authConfig = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile, email, credentials }: any) {
-      if (account?.provider === "google") {
-        const email = user.email;
-        if (!email) return false;
-        const userDb = await prisma.user.findFirst({
-          where: { username: email },
-        });
-        if (userDb) {
-          return true;
-        }
-        const keypair = Keypair.generate();
-        await prisma.user.create({
-          data: {
-            username: email,
-            provider: "Google",
-            name: profile?.name,
-            sub: account.providerAccountId,
-            //@ts-ignore
-            profilePicture: profile?.picture,
-            solWallet: {
-              create: {
-                publicKey: keypair.publicKey.toBase58(),
-                privateKey: keypair.secretKey.toString(),
-              },
-            },
-            inrWallet: {
-              create: {
-                balance: 0,
-              },
-            },
-          },
-        });
-        return true;
-      }
-      return false;
-    },
     session: ({ session, token }: any): session => {
       const newSession: session = session as session;
       if (newSession.user && token.uid) {
@@ -67,7 +31,7 @@ export const authConfig = {
       return newSession!;
     },
     async jwt({ token, account, profile }: any) {
-      const user = await prisma.user.findFirst({
+      const user = await db.user.findFirst({
         where: {
           sub: account?.providerAccountId ?? "",
         },
@@ -76,6 +40,54 @@ export const authConfig = {
         token.uid = user.id;
       }
       return token;
+    },
+    async signIn({ user, account, profile, email, credentials }: any) {
+      if (account?.provider === "google") {
+        const email = user.email;
+        if (!email) {
+          return false;
+        }
+
+        const userDb = await db.user.findFirst({
+          where: {
+            username: email,
+          },
+        });
+
+        if (userDb) {
+          return true;
+        }
+
+        const keypair = Keypair.generate();
+        const publicKey = keypair.publicKey.toBase58();
+        const privateKey = keypair.secretKey;
+
+        await db.user.create({
+          data: {
+            username: email,
+            name: profile?.name,
+            //@ts-ignore
+            profilePicture: profile?.picture,
+            provider: "Google",
+            sub: account.providerAccountId,
+            solWallet: {
+              create: {
+                publicKey: publicKey,
+                privateKey: privateKey.toString(),
+              },
+            },
+            inrWallet: {
+              create: {
+                balance: 0,
+              },
+            },
+          },
+        });
+
+        return true;
+      }
+
+      return false;
     },
   },
 };
