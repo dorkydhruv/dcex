@@ -4,6 +4,7 @@ import {
   getAccount,
   getMint,
 } from "@solana/spl-token";
+
 import { connection, getSupportedTokens } from "@/app/lib/ constants";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 export async function GET(req: NextRequest) {
