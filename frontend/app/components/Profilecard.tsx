@@ -5,10 +5,14 @@ import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { useTokens } from "@/app/api/hooks/useTokens";
 import { TokenList } from "./TokenList";
+import { TabButton } from "./TabButton";
+import Swap from "./Swap";
 
 const Profilecard = ({ publicKey }: { publicKey: string }) => {
   const router = useRouter();
+  const [selectedTab, setSelectedTab] = useState<Tab>("tokens");
   const session = useSession();
+  const [tokenBalances, setTokenBalances] = useState<any>(null);
   if (session.status === "loading") {
     return (
       <div className="flex justify-center items-center">
@@ -30,12 +34,31 @@ const Profilecard = ({ publicKey }: { publicKey: string }) => {
           image={session.data?.user?.image ?? ""}
         />
       </div>
-      <Assets publicKey={publicKey} />
+      <div className="flex w-full justify-center px-10 py-4">
+        {tabs.map((tab) => (
+          <TabButton
+            active={selectedTab === tab ? true : false}
+            onClick={() => setSelectedTab(tab)}
+          >
+            {tab.toUpperCase()}
+          </TabButton>
+        ))}
+      </div>
+      <div className={`${selectedTab === "tokens" ? "visible" : "hidden"}`}>
+        <Assets publicKey={publicKey} />
+      </div>
+      <div className={`${selectedTab === "swap" ? "visible" : "hidden"}`}>
+        <Swap publicKey={publicKey} />
+      </div>
     </div>
   );
 };
 
 export default Profilecard;
+
+type Tab = "tokens" | "send" | "add_funds" | "swap" | "withdraw";
+
+const tabs: Tab[] = ["tokens", "send", "add_funds", "withdraw", "swap"];
 
 function Assets({ publicKey }: { publicKey: string }) {
   const [copied, setCopied] = useState(false);
